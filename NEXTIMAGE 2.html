@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Spot the Difference Puzzle</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1A202C;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            background: #2D3748;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 1em;
+            color: #A0AEC0;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: #4A5568;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 1em;
+            color: #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #718096;
+        }
+
+        .stat-box.stars-container {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .stars {
+            color: #ECC94B;
+            font-size: 1.5em;
+        }
+
+        .stars .star-filled {
+            color: gold;
+        }
+
+        .stars .star-empty {
+            color: #718096;
+        }
+
+        .status-bar {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 0 40px;
+            box-sizing: border-box;
+        }
+
+        .timer-container {
+            flex-grow: 1;
+            height: 10px;
+            background: #4A5568;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-right: 20px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: #48BB78;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            color: #FFFFFF;
+        }
+
+        .controls button:hover {
+            transform: translateY(-2px);
+        }
+
+        .controls .btn-pause {
+            background: #5A67D8;
+        }
+
+        .controls .btn-hint {
+            background: #9F7AEA;
+        }
+
+        .controls .btn-restart {
+            background: #F56565;
+        }
+
+        .images-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 30px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .image-wrapper.paused {
+            pointer-events: none;
+        }
+
+        .image-wrapper:hover {
+            transform: scale(1.02);
+        }
+
+        img {
+            width: 400px;
+            display: block;
+            border-radius: 12px;
+        }
+
+        .hotspot {
+            position: absolute;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border 0.3s ease;
+        }
+
+        .hotspot.hint {
+            border: 2px solid gold;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .mark {
+            position: absolute;
+            font-size: 28px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .instructions {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #2D3748;
+            color: #A0AEC0;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #FFFFFF;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #2D3748;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .modal-content.win h2 {
+            color: #48BB78;
+        }
+
+        .modal-content.lose h2 {
+            color: #F56565;
+        }
+
+        .modal-content h2 {
+            font-size: 2.5em;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .modal-card {
+            background: #4A5568;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .modal-card-label {
+            color: #A0AEC0;
+            font-size: 0.9em;
+        }
+
+        .modal-card-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-modal {
+            background: #48BB78;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-modal.restart {
+            background: #F56565;
+        }
+
+        .btn-modal:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="resultsModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <div id="scoreCard" class="modal-card">
+                <div class="modal-card-label">Final Score</div>
+                <div id="finalScore" class="modal-card-value"></div>
+            </div>
+            <div class="modal-card">
+                <div class="modal-card-label">Accuracy</div>
+                <div id="finalAccuracy" class="modal-card-value"></div>
+            </div>
+            <div class="modal-card">
+                <div class="modal-card-label">Time Taken</div>
+                <div id="finalTime" class="modal-card-value"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal restart" id="restartBtnModal" onclick="restartGame()">Restart</button>
+                <button class="btn-modal" id="nextLevelBtn" style="display:none;" onclick="loadNextLevel()">Next
+                    Image</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="header-left">
+            <h1>Spot the Difference</h1>
+            <p id="levelInfo">Level 1 of 3 — Warm-up</p>
+        </div>
+        <div class="header-right">
+            <div class="stat-box stars-container">
+                <div class="stars" id="starContainer">
+                    <span class="star-empty">★</span>
+                    <span class="star-empty">★</span>
+                    <span class="star-empty">★</span>
+                    <span class="star-empty">★</span>
+                    <span class="star-empty">★</span>
+                </div>
+            </div>
+            <div class="stat-box">Score: <span id="score">0</span></div>
+            <div class="stat-box">Combo: <span id="combo">0x</span></div>
+            <div class="stat-box">Found: <span id="found">0/5</span></div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="timer-container">
+            <div class="timer-fill" id="timerFill"></div>
+        </div>
+        <div class="controls">
+            <button class="btn-pause" id="pauseBtn">Pause</button>
+            <button class="btn-hint" id="hintBtn">Hint</button>
+            <button class="btn-restart" id="restartBtn">Restart</button>
+        </div>
+    </div>
+
+    <div class="images-container">
+        <div class="image-wrapper" id="leftImageWrapper">
+            <img id="leftImage" src="Spot-5-Differences-in-16-Seconds 1.jpg" alt="Left Image" />
+        </div>
+        <div class="image-wrapper" id="rightImageWrapper">
+            <img id="rightImage" src="Spot-5-Differences-in-16-Seconds 2.jpg" alt="Right Image" />
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>📜 How to Play</h3>
+        <ul>
+            <li>Your goal is to find **all 5 differences** between the two images.</li>
+            <li>Click on the **right image** to mark a difference you spot.</li>
+            <li>A correct click adds to your score and found count.</li>
+            <li>An incorrect click will penalize your score and time.</li>
+            <li>If you get stuck, use the **Hint** button to reveal one hidden difference.</li>
+            <li>Find all the differences before the timer runs out to win!</li>
+        </ul>
+    </div>
+
+    <script>
+        const levels = [
+            {
+                images: {
+                    left: 'Spot-5-Differences-in-16-Seconds 1.jpg',
+                    right: 'Spot-5-Differences-in-16-Seconds 2.jpg'
+                },
+                hotspots: [
+                    { x: 140, y: 50, width: 50, height: 50, correct: true },
+                    { x: 250, y: 60, width: 40, height: 40, correct: true },
+                    { x: 200, y: 100, width: 60, height: 60, correct: true },
+                    { x: 80, y: 5, width: 60, height: 60, correct: true },
+                    { x: 230, y: 150, width: 60, height: 60, correct: false }
+                ]
+            },
+            {
+                images: {
+                    left: 'Image 1 - Side A.jpg',
+                    right: 'Image 1 - Side B.jpg'
+                },
+                hotspots: [
+                    { x: 200, y: 100, width: 50, height: 50, correct: true }, // GIRL
+                    { x: 320, y: 170, width: 40, height: 40, correct: true },
+                    { x: 40, y: 170, width: 60, height: 60, correct: true },
+                    { x: 40, y: 20, width: 60, height: 60, correct: true },
+                    { x: 310, y: -3, width: 60, height: 60, correct: true },
+
+                ]
+            },
+            {
+                images: {
+                    left: '2A.jpg',
+                    right: '2B.jpg'
+                },
+                hotspots: [
+                    { x: 180, y: 20, width: 50, height: 50, correct: true },
+                    { x: 150, y: 130, width: 40, height: 40, correct: true },
+                    { x: 260, y: 95, width: 60, height: 60, correct: true },
+                    { x: 140, y: 190, width: 60, height: 60, correct: true },
+                    { x: 60, y: 50, width: 60, height: 60, correct: true }
+
+                ]
+            }
+        ];
+
+        let currentLevelIndex = 0;
+        let score = 0;
+        let combo = 0;
+        let correctClicks = 0;
+        let totalClicks = 0;
+        let startTime = Date.now();
+        let foundDifferences = new Set();
+        let timer = 60;
+        let paused = false;
+        let interval;
+        let totalDifferences;
+
+        const rightWrapper = document.getElementById('rightImageWrapper');
+        const leftImageEl = document.getElementById('leftImage');
+        const rightImageEl = document.getElementById('rightImage');
+        const levelInfoEl = document.getElementById('levelInfo');
+        const scoreEl = document.getElementById('score');
+        const foundEl = document.getElementById('found');
+        const comboEl = document.getElementById('combo');
+        const timerFill = document.getElementById('timerFill');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const starContainer = document.getElementById('starContainer');
+        const resultsModal = document.getElementById('resultsModal');
+        const modalTitleEl = document.getElementById('modalTitle');
+        const modalMessageEl = document.getElementById('modalMessage');
+        const restartBtnModal = document.getElementById('restartBtnModal');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalAccuracyEl = document.getElementById('finalAccuracy');
+        const finalTimeEl = document.getElementById('finalTime');
+
+        function initializeGame(levelIndex) {
+            console.log('Reinitializing level:', levelIndex);
+            currentLevelIndex = levelIndex;
+            const currentLevel = levels[currentLevelIndex];
+
+            // Reset game state
+            score = 0;
+            combo = 0;
+            correctClicks = 0;
+            totalClicks = 0;
+            startTime = Date.now();
+            foundDifferences.clear();
+            timer = 60;
+            paused = false;
+            if (interval) clearInterval(interval);
+            // Reset pause button text
+            pauseBtn.innerText = 'Pause';
+
+            // Update UI elements for the new level
+            levelInfoEl.innerText = `Level ${currentLevelIndex + 1} of ${levels.length} — Warm-up`;
+            leftImageEl.src = currentLevel.images.left;
+            rightImageEl.src = currentLevel.images.right;
+            scoreEl.innerText = score;
+            comboEl.innerText = `${combo}x`;
+
+            totalDifferences = currentLevel.hotspots.filter(h => h.correct).length;
+            foundEl.innerText = `0/${totalDifferences}`;
+
+            // Clear old hotspots and add new ones
+            console.log('Hotspots before removal:', rightWrapper.querySelectorAll('.hotspot').length);
+            rightWrapper.querySelectorAll('.hotspot').forEach(el => el.remove());
+            rightWrapper.querySelectorAll('.mark').forEach(el => el.remove());
+            console.log('Hotspots after removal:', rightWrapper.querySelectorAll('.hotspot').length);
+
+            // Add new hotspots
+            currentLevel.hotspots.forEach((spot, index) => {
+                const div = document.createElement('div');
+                div.className = 'hotspot';
+                div.style.left = spot.x + 'px';
+                div.style.top = spot.y + 'px';
+                div.style.width = spot.width + 'px';
+                div.style.height = spot.height + 'px';
+                div.dataset.correct = spot.correct;
+                div.dataset.index = index;
+                div.addEventListener('click', () => handleHotspotClick(div));
+                rightWrapper.appendChild(div);
+            });
+            console.log('Hotspots after creation:', rightWrapper.querySelectorAll('.hotspot').length);
+
+            updateStars();
+            startTimer();
+            resultsModal.style.display = 'none';
+
+            // Re-enable clicks
+            rightWrapper.classList.remove('paused');
+        }
+
+        function updateStars() {
+            const starElements = starContainer.querySelectorAll('span');
+            const filledStars = foundDifferences.size;
+            starElements.forEach((star, index) => {
+                if (index < filledStars) {
+                    star.className = 'star-filled';
+                } else {
+                    star.className = 'star-empty';
+                }
+            });
+        }
+
+        function startTimer() {
+            interval = setInterval(() => {
+                if (!paused) {
+                    timer--;
+                    timerFill.style.width = (timer / 60) * 100 + '%';
+                    if (timer <= 0) {
+                        clearInterval(interval);
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseGame() {
+            paused = !paused;
+            pauseBtn.innerText = paused ? 'Resume' : 'Pause';
+            rightWrapper.classList.toggle('paused', paused);
+        }
+
+        function showHint() {
+            if (paused) return;
+            const currentHotspots = levels[currentLevelIndex].hotspots;
+            const unfoundSpots = currentHotspots.filter((spot, index) => spot.correct && !foundDifferences.has(index.toString()));
+            if (unfoundSpots.length > 0) {
+                const hintSpot = unfoundSpots[0];
+                const hintIndex = currentHotspots.findIndex(spot => spot === hintSpot);
+                const hintDiv = document.querySelector(`.hotspot[data-index="${hintIndex}"]`);
+                if (hintDiv) {
+                    const existingHint = document.querySelector('.hotspot.hint');
+                    if (existingHint) existingHint.classList.remove('hint');
+                    hintDiv.classList.add('hint');
+
+                    score = Math.max(0, score - 5);
+                    combo = 0;
+                    comboEl.innerText = `${combo}x`;
+                    scoreEl.innerText = score;
+                }
+            }
+        }
+
+        function restartGame() {
+            clearInterval(interval);
+            initializeGame(currentLevelIndex);
+        }
+
+        function loadNextLevel() {
+            if (currentLevelIndex < levels.length - 1) {
+                initializeGame(currentLevelIndex + 1);
+            } else {
+                alert("Congratulations! You've completed all levels!");
+            }
+        }
+
+        function endGame() {
+            clearInterval(interval);
+            paused = true;
+            pauseBtn.innerText = 'Resume';
+            rightWrapper.classList.add('paused');
+
+            const timeTaken = (Date.now() - startTime) / 1000;
+            const accuracy = totalClicks > 0 ? (correctClicks / totalClicks) * 100 : 0;
+
+            const isWin = foundDifferences.size === totalDifferences;
+            const meetsAccuracy = accuracy >= 85;
+
+            if (isWin && meetsAccuracy) {
+                modalTitleEl.innerText = "Congratulations!";
+                modalMessageEl.innerText = "You found all the differences with excellent accuracy!";
+                resultsModal.classList.add('win');
+                resultsModal.classList.remove('lose');
+                restartBtnModal.style.display = 'inline-block';
+                nextLevelBtn.style.display = 'inline-block';
+            } else {
+                modalTitleEl.innerText = "Game Over!";
+                modalMessageEl.innerText = "You didn't meet the requirements. Try again!";
+                resultsModal.classList.add('lose');
+                resultsModal.classList.remove('win');
+                restartBtnModal.style.display = 'inline-block';
+                nextLevelBtn.style.display = 'none';
+            }
+
+            finalScoreEl.innerText = score;
+            finalAccuracyEl.innerText = `${accuracy.toFixed(1)}%`;
+            finalTimeEl.innerText = `${timeTaken.toFixed(1)}s`;
+
+            resultsModal.style.display = 'flex';
+        }
+
+        function handleHotspotClick(div) {
+            if (paused) return;
+            const index = div.dataset.index;
+            const isCorrect = div.dataset.correct === 'true';
+            totalClicks++;
+            if (foundDifferences.has(index)) return;
+
+            const markDiv = document.createElement('div');
+            markDiv.className = 'mark';
+            markDiv.innerHTML = isCorrect ? '✅' : '❌';
+            markDiv.style.left = (parseFloat(div.style.left) + div.offsetWidth / 2 - 12) + 'px';
+            markDiv.style.top = (parseFloat(div.style.top) + div.offsetHeight / 2 - 12) + 'px';
+            rightWrapper.appendChild(markDiv);
+
+            if (isCorrect) {
+                correctClicks++;
+                foundDifferences.add(index);
+                foundEl.innerText = `${foundDifferences.size}/${totalDifferences}`;
+                score += 10;
+                combo++;
+                comboEl.innerText = `${combo}x`;
+            } else {
+                score = Math.max(0, score - 5);
+                combo = 0;
+                comboEl.innerText = `${combo}x`;
+                timer = Math.max(0, timer - 5);
+            }
+
+            scoreEl.innerText = score;
+            updateStars();
+
+            if (foundDifferences.size === totalDifferences) {
+                endGame();
+            }
+
+            const existingHint = document.querySelector('.hotspot.hint');
+            if (existingHint) existingHint.classList.remove('hint');
+        }
+
+        // Event listeners
+        document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+        document.getElementById('hintBtn').addEventListener('click', showHint);
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+
+        window.onload = () => {
+            initializeGame(currentLevelIndex);
+        };
+    </script>
+</body>
+
+</html>
