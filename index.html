@@ -391,7 +391,7 @@
     <div class="instructions">
         <h3>📜 How to Play</h3>
         <ul>
-            <li>Your goal is to find **all 5 differences** between the two images.</li>
+            <li>Your goal is to find **differences** between the two images.</li>
             <li>Click on the **right image** to mark a difference you spot.</li>
             <li>A correct click adds to your score and found count.</li>
             <li>An incorrect click will penalize your score and time.</li>
@@ -401,47 +401,48 @@
     </div>
 
     <script>
-        const levels = [
-            {
-                images: {
-                    left: 'Spot-5-Differences-in-16-Seconds 1.jpg',
-                    right: 'Spot-5-Differences-in-16-Seconds 2.jpg'
-                },
-                hotspots: [
-                    { x: 140, y: 50, width: 50, height: 50, correct: true },
-                    { x: 250, y: 60, width: 40, height: 40, correct: true },
-                    { x: 200, y: 100, width: 60, height: 60, correct: true },
-                    { x: 80, y: 5, width: 60, height: 60, correct: true },
-                    { x: 230, y: 150, width: 60, height: 60, correct: false }
-                ]
+        const levels = [{
+            images: {
+                left: 'Spot-5-Differences-in-16-Seconds 1.jpg',
+                right: 'Spot-5-Differences-in-16-Seconds 2.jpg'
             },
-            {
-                images: {
-                    left: 'Image 1 - Side A.jpg',
-                    right: 'Image 1 - Side B.jpg'
-                },
-                hotspots: [
-                    { x: 200, y: 100, width: 50, height: 50, correct: true },
-                    { x: 320, y: 170, width: 40, height: 40, correct: true },
-                    { x: 40, y: 170, width: 60, height: 60, correct: true },
-                    { x: 40, y: 20, width: 60, height: 60, correct: true },
-                    { x: 310, y: -3, width: 60, height: 60, correct: true },
-                ]
+            hotspots: [
+                { x: 140, y: 50, width: 50, height: 50, correct: true },
+                { x: 250, y: 60, width: 40, height: 40, correct: true },
+                { x: 200, y: 100, width: 60, height: 60, correct: true },
+                { x: 80, y: 5, width: 60, height: 60, correct: true },
+                { x: 150, y: 310, width: 60, height: 60, correct: true },
+                { x: 230, y: 150, width: 60, height: 60, correct: false }
+            ]
+        }, {
+            images: {
+                left: 'Image 1 - Side A.jpg',
+                right: 'Image 1 - Side B.jpg'
             },
-            {
-                images: {
-                    left: '2A.jpg',
-                    right: '2B.jpg'
-                },
-                hotspots: [
-                    { x: 180, y: 20, width: 50, height: 50, correct: true },
-                    { x: 150, y: 130, width: 40, height: 40, correct: true },
-                    { x: 260, y: 95, width: 60, height: 60, correct: true },
-                    { x: 140, y: 190, width: 60, height: 60, correct: true },
-                    { x: 60, y: 50, width: 60, height: 60, correct: true }
-                ]
-            }
-        ];
+            hotspots: [
+                { x: 200, y: 100, width: 50, height: 50, correct: true }, // GIRL
+                { x: 320, y: 170, width: 40, height: 40, correct: true },
+                { x: 40, y: 170, width: 60, height: 60, correct: true },
+                { x: 40, y: 20, width: 60, height: 60, correct: true },
+                { x: 310, y: -3, width: 60, height: 60, correct: true },
+
+            ]
+        }, {
+            images: {
+                left: '2A.jpg',
+                right: '2B.jpg'
+            },
+            hotspots: [
+                { x: 180, y: 20, width: 50, height: 50, correct: true },
+                { x: 150, y: 130, width: 40, height: 40, correct: true },
+                { x: 260, y: 95, width: 60, height: 60, correct: true },
+                { x: 140, y: 190, width: 60, height: 60, correct: true },
+                { x: 60, y: 50, width: 60, height: 60, correct: true },
+                { x: 10, y: 40, width: 60, height: 60, correct: true },
+
+
+            ]
+        }];
 
         let currentLevelIndex = 0;
         let score = 0;
@@ -477,6 +478,7 @@
         const finalTimeEl = document.getElementById('finalTime');
 
         function initializeGame(levelIndex) {
+            console.log('Reinitializing level:', levelIndex);
             currentLevelIndex = levelIndex;
             const currentLevel = levels[currentLevelIndex];
 
@@ -490,6 +492,7 @@
             timer = 60;
             paused = false;
             if (interval) clearInterval(interval);
+            // Reset pause button text
             pauseBtn.innerText = 'Pause';
 
             // Update UI elements for the new level
@@ -503,8 +506,10 @@
             foundEl.innerText = `0/${totalDifferences}`;
 
             // Clear old hotspots and add new ones
+            console.log('Hotspots before removal:', rightWrapper.querySelectorAll('.hotspot').length);
             rightWrapper.querySelectorAll('.hotspot').forEach(el => el.remove());
             rightWrapper.querySelectorAll('.mark').forEach(el => el.remove());
+            console.log('Hotspots after removal:', rightWrapper.querySelectorAll('.hotspot').length);
 
             // Add new hotspots
             currentLevel.hotspots.forEach((spot, index) => {
@@ -516,21 +521,18 @@
                 div.style.height = spot.height + 'px';
                 div.dataset.correct = spot.correct;
                 div.dataset.index = index;
+                div.dataset.clicked = 'false'; // <-- Updated line
                 div.addEventListener('click', () => handleHotspotClick(div));
                 rightWrapper.appendChild(div);
             });
+            console.log('Hotspots after creation:', rightWrapper.querySelectorAll('.hotspot').length);
 
             updateStars();
             startTimer();
             resultsModal.style.display = 'none';
-            rightWrapper.classList.remove('paused');
 
-            // Set button text based on whether it's the last level
-            if (currentLevelIndex === levels.length - 1) {
-                nextLevelBtn.innerText = 'Next Level';
-            } else {
-                nextLevelBtn.innerText = 'Next Image';
-            }
+            // Re-enable clicks
+            rightWrapper.classList.remove('paused');
         }
 
         function updateStars() {
@@ -578,7 +580,7 @@
                     hintDiv.classList.add('hint');
 
                     score = Math.max(0, score - 5);
-                    combo = Math.max(0, combo - 1);
+                    combo = 0;
                     comboEl.innerText = `${combo}x`;
                     scoreEl.innerText = score;
                 }
@@ -594,7 +596,7 @@
             if (currentLevelIndex < levels.length - 1) {
                 initializeGame(currentLevelIndex + 1);
             } else {
-                alert("Congratulations! You've completed all levels!");
+                alert("Congratulations! You've completed all Images In Level 1!");
             }
         }
 
@@ -616,12 +618,7 @@
                 resultsModal.classList.add('win');
                 resultsModal.classList.remove('lose');
                 restartBtnModal.style.display = 'inline-block';
-                if (currentLevelIndex < levels.length - 1) {
-                    nextLevelBtn.style.display = 'inline-block';
-                } else {
-                    nextLevelBtn.style.display = 'none';
-                    modalMessageEl.innerText = "You have completed all levels! Great job!";
-                }
+                nextLevelBtn.style.display = 'inline-block';
             } else {
                 modalTitleEl.innerText = "Game Over!";
                 modalMessageEl.innerText = "You didn't meet the requirements. Try again!";
@@ -639,17 +636,16 @@
         }
 
         function handleHotspotClick(div) {
-            if (paused) return;
-            const index = div.dataset.index;
-            const isCorrect = div.dataset.correct === 'true';
-
-            // Check if the spot has already been found
-            if (foundDifferences.has(index)) {
-                alert("You've already found this difference!");
-                return;
+            if (paused || div.dataset.clicked === 'true') {
+                return; // Exit if the game is paused or the spot is already clicked
             }
 
+            const index = div.dataset.index;
+            const isCorrect = div.dataset.correct === 'true';
             totalClicks++;
+
+            // Mark the hotspot as clicked so it can't be clicked again
+            div.dataset.clicked = 'true';
 
             const markDiv = document.createElement('div');
             markDiv.className = 'mark';
@@ -664,14 +660,15 @@
                 foundEl.innerText = `${foundDifferences.size}/${totalDifferences}`;
                 score += 10;
                 combo++;
+                comboEl.innerText = `${combo}x`;
             } else {
                 score = Math.max(0, score - 5);
-                combo = Math.max(0, combo - 1); // Decrease combo by 1 on a wrong click
+                combo = 0;
+                comboEl.innerText = `${combo}x`;
                 timer = Math.max(0, timer - 5);
             }
 
             scoreEl.innerText = score;
-            comboEl.innerText = `${combo}x`;
             updateStars();
 
             if (foundDifferences.size === totalDifferences) {
